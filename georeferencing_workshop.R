@@ -46,11 +46,15 @@ migrants[!is.na(pob_lat) & !is.na(pob_long), .N] / migrants[, .N] # gives the sh
 
 migrants[is.na(pob_lat) & is.na(pob_long), .N, list(pob)][order(-N)] # missing coordinates grouped by place of birth in descending order
 
-# let's remove empty cells as NA (so that they are ignored in visualizations)
+# let's remove empty cells as NA 
 
 migrants[pob == "", pob := NA,]
 
 migrants <- migrants[!is.na(pob_lat),]
+
+# let's see where they came from
+
+migrants[, .N, list(pob_modern)][order(-N)]
 
 # because we are also interested in their occupations, let's inspect those as well
 
@@ -70,13 +74,10 @@ migrants[is.na(hisco), .N, list(occupation)][order(-N)] # check if we've fixed i
 world <- map_data("world")
 
 ggplot() +
-    geom_map(
-    data = world, map = world,
-    aes(long, lat, map_id = region),
-    color = "lightgrey", fill = "white", size = 0.2) +
-  geom_point(data = migrants, aes(x = pob_long, y = pob_lat), color= "red") 
+    geom_map(data = world, map = world, aes(long, lat, map_id = region), color = "lightgrey", fill = "white", size = 0.2) +
+    geom_point(data = migrants, aes(x = pob_long, y = pob_lat), color= "red") 
 
-# let's select Europe instead
+# let's select European countries instead
 
 some.countries <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus",
                           "Czech Rep.","Denmark","Estonia","Finland","France",
@@ -89,10 +90,7 @@ some.countries <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus",
 europe <- map_data("world", region = some.countries)
 
 ggplot() +
-  geom_map(
-    data = europe, map = europe,
-    aes(long, lat, map_id = region),
-    color = "lightgrey", fill = "white", size = 0.2) +
+  geom_map(data = europe, map = europe, aes(long, lat, map_id = region),     color = "lightgrey", fill = "white", size = 0.2) +
   geom_point(data = migrants, aes(x = pob_long, y = pob_lat), color= "red") +
   scale_x_continuous(limits = c(-25, 50)) +
   scale_y_continuous(limits = c(35, 70))
@@ -101,7 +99,7 @@ ggplot() +
 # now we know what our region of focus is, we move to uu.georeferencer.com to select a historical map
 # Ruben/Marco will demonstrate this part
 
-#selected map: https://uu.georeferencer.com/maps/6992ab78-a092-5872-886b-3b5f898f6eb1/
+# selected map: https://uu.georeferencer.com/maps/6992ab78-a092-5872-886b-3b5f898f6eb1/
 # XYZ link: https://maps.georeferencer.com/georeferences/628a2266-3b45-58b8-a107-ea5f204ccb87/2020-01-27T10:50:16.591365Z/map/{z}/{x}/{y}.png?key=gRNP1HB3RfkLmp7UMOjj
 
 # add this to our Data
@@ -113,51 +111,51 @@ map_url <- ("https://maps.georeferencer.com/georeferences/628a2266-3b45-58b8-a10
 leaflet() %>% setView(lng = 15, lat = 45, zoom = 4) %>%
   addTiles(map_url)
 
-# now we'll add our migrants to it  
+# now we'll add our migrant dataset to it  
 
 leaflet(data=migrants) %>% setView(lng = 15, lat = 45, zoom = 4) %>%
   addTiles(map_url) %>%
-  addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = "black")
+  addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = "black", radius = 5)
 
-# ok, that's not really pretty, let's fix this by clustering the markers
+# ok, but now we lose sight on migrants from the same location (remember Amsterdam?). Let's fix this by clustering the markers
 
 leaflet(data=migrants) %>% setView(lng = 15, lat = 45, zoom = 4) %>%
   addTiles(map_url) %>%
-  addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = "black",
+  addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = "red", radius = 5,
                    clusterOptions = markerClusterOptions())
 
-# that's already better! Let's now make the markers display information about the migrants
+# that's already better! Let's now make the markers display information about the migrants with a recorded occupation
 
 leaflet(data=migrants[!is.na(occupation)]) %>% setView(lng = 15, lat = 45, zoom = 4) %>%
   addTiles(map_url) %>%
-  addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = "black",
+  addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = "blue", radius = 8,
                    label =  ~occupation,
                    clusterOptions = markerClusterOptions())
 
-# black is not very appealing, now we'll use other variables to color the markers
+# now we'll use other variables to color the markers according to HISCAM (status): more red = higher status
 
 qpal <- colorBin("Reds", migrants$hiscam, bins = 8) # define our color scale
 
 leaflet(data=migrants[!is.na(migrants$hiscam)]) %>% setView(lng = 15, lat = 45, zoom = 4) %>%
   addTiles(map_url) %>%
-  addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = ~qpal(hiscam),
+  addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = ~qpal(hiscam), radius = 8,
                    label =  ~hiscam)
 
 # and now with clustering
 
 leaflet(data=migrants[!is.na(migrants$hiscam)]) %>% setView(lng = 15, lat = 45, zoom = 4) %>%
   addTiles(map_url) %>%
-  addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = ~qpal(hiscam),
+  addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = ~qpal(hiscam), radius = 8,
                    label =  ~hiscam,
                     clusterOptions = markerClusterOptions())
 
 
-# now we would also like to know their occupations again, but keep their HISCAM score
+# we would also like to know their occupations again, but keep their HISCAM score and color
 
 leaflet(data=migrants[!is.na(migrants$hiscam)]) %>% setView(lng = 15, lat = 45, zoom = 4) %>%
   addTiles(map_url) %>%
   addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = ~qpal(hiscam),
-                   label =  ~as.character(paste0(occupation, ", HISCAM = ", hiscam)),
+                   label =  ~as.character(paste0(occupation, ", HISCAM = ", hiscam)), radius = 8,
                    clusterOptions = markerClusterOptions())
 
 
@@ -170,16 +168,16 @@ library(htmlwidgets)
 myMap <- leaflet(data=migrants[!is.na(migrants$hiscam)]) %>% setView(lng = 15, lat = 45, zoom = 4) %>%
   addTiles(map_url) %>%
   addCircleMarkers(lat = ~pob_lat, lng = ~pob_long, color = ~qpal(hiscam),
-                   label =  ~as.character(paste0(occupation, ", HISCAM = ", hiscam)),
+                   label =  ~as.character(paste0(occupation, ", HISCAM = ", hiscam)), radius = 8,
                    clusterOptions = markerClusterOptions())
 
-htmlwidgets::saveWidget(myMap, 'index.html', selfcontained = TRUE)   
+htmlwidgets::saveWidget(myMap, "C:/FOLDER/FOLDER/index.html", selfcontained = TRUE)   
 
 # this html file will open in your browser for viewing
 
 # if you want to have this as a website, you need to publish it online, for instance using a github repository:
 # 1: make a github repo
-# 2: change the filename from MyMap to index if needed
+# 2: change the filename to 'index' if not already done so
 # 3: upload it to Github
 # 4: go to repository > settings > pages > deploy from branch > main > save
 # 5: give it some time and visit your webpage e.g. https://rubenschalk.github.io/onlinemap
@@ -202,7 +200,6 @@ library(mapview)
 
 migrants$lat <- jitter(migrants$pob_lat, factor = 0.8) # mapview has no cluster option so we use jitter to spread the coordinates
 migrants$lon <- jitter(migrants$pob_long, factor = 0.8)
-
 
 mapview(migrants, xcol = "lon", ycol = "lat", crs = 4326)
 
