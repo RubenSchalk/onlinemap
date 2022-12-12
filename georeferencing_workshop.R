@@ -96,13 +96,13 @@ ggplot() +
   scale_y_continuous(limits = c(35, 70))
 
 
-# now we know what our region of focus is, we move to uu.georeferencer.com to select a historical map
-# Ruben/Marco will demonstrate this part
+# now we know what our region of focus is, we move to https://uu.georeferencer.com/compare#  to select a historical map
+# go to the landing page of the map by clicking the title in the viewer, make sure you're logged in to georeferencer and copy the XYZ link
 
-# selected map: https://uu.georeferencer.com/maps/6992ab78-a092-5872-886b-3b5f898f6eb1/
+# preselected map: https://uu.georeferencer.com/maps/6992ab78-a092-5872-886b-3b5f898f6eb1/
 # XYZ link: https://maps.georeferencer.com/georeferences/628a2266-3b45-58b8-a107-ea5f204ccb87/2020-01-27T10:50:16.591365Z/map/{z}/{x}/{y}.png?key=gRNP1HB3RfkLmp7UMOjj
 
-# add this to our Data
+# add this to our Data Environment
 
 map_url <- ("https://maps.georeferencer.com/georeferences/628a2266-3b45-58b8-a107-ea5f204ccb87/2020-01-27T10:50:16.591365Z/map/{z}/{x}/{y}.png?key=gRNP1HB3RfkLmp7UMOjj")
 
